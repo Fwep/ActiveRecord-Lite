@@ -4,6 +4,7 @@ require 'active_support/inflector'
 class SQLObject
   def self.columns
     return @columns if @columns
+    # #execute2 just makes it more convenient to grab the columns
     query = DBConnection.execute2(<<-SQL)
       SELECT
         *
@@ -45,12 +46,25 @@ class SQLObject
 
   def self.parse_all(results)
     results.map do |res|
-      self.new(res)
+      parse(res)
     end
   end
 
+  def self.parse(res)
+    self.new(res)
+  end
+
   def self.find(id)
-    # ...
+    res = DBConnection.instance.execute(<<-SQL, id)
+      SELECT
+        #{self.table_name}.*
+      FROM
+        #{self.table_name}
+      WHERE
+        #{self.table_name}.id = ?
+    SQL
+    return nil if res[0].nil?
+    parse(res[0])
   end
 
   def initialize(params = {})
@@ -70,7 +84,7 @@ class SQLObject
   end
 
   def insert
-    # ...
+    
   end
 
   def update
