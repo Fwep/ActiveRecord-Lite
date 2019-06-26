@@ -99,7 +99,16 @@ class SQLObject
   end
 
   def update
-    # ...
+    set = self.class.columns.drop(1).map {|column| "#{column.to_s} = ?"}.join(', ')
+    
+    DBConnection.instance.execute(<<-SQL, *attribute_values[1..-1], id)
+      UPDATE
+        #{self.class.table_name}
+      SET
+        #{set}
+      WHERE
+        id = ?
+    SQL
   end
 
   def save
