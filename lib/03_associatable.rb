@@ -43,12 +43,17 @@ class HasManyOptions < AssocOptions
 end
 
 module Associatable
+  def assoc_options
+    @assoc_options ||= {}
+  end
+  
   def belongs_to(name, options = {})
-    belongs_options = BelongsToOptions.new(name, options)
+    self.assoc_options[name] = BelongsToOptions.new(name, options)
     define_method(name) do
-      primary_key = belongs_options.primary_key
-      foreign_key = self.send(belongs_options.foreign_key)
-      model_class = belongs_options.model_class
+      primary_key = self.class.assoc_options[name].primary_key
+      foreign_key = self.send(self.class.assoc_options[name].foreign_key)
+      model_class = self.class.assoc_options[name].model_class
+
       model_class.where(primary_key => foreign_key).first
     end
   end
@@ -64,9 +69,6 @@ module Associatable
     end
   end
 
-  def assoc_options
-    # Wait to implement this in Phase IVa. Modify `belongs_to`, too.
-  end
 end
 
 class SQLObject
